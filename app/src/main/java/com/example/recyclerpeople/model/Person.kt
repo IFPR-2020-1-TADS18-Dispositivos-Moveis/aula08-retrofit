@@ -1,13 +1,20 @@
 package com.example.recyclerpeople.model
 
-data class Person(var title: String, var firstName: String, var lastName: String) {
-    companion object {
-        fun example() = mutableListOf(
-            Person("Sr.", "Diego", "Stiehl"),
-            Person("Sr.", "Levy", "Ferreira"),
-            Person("Sra.", "Maritza", "Silva"),
-            Person("Sr.", "Josepher", "Castro"),
-            Person("Sra.", "Rosana", "Prestes")
-        )
-    }
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "people")
+data class Person(
+    var title: String,
+    @ColumnInfo(name = "first_name")
+    var firstName: String,
+    @ColumnInfo(name = "last_name")
+    var lastName: String
+) {
+    @PrimaryKey(autoGenerate = true)
+    var id: Long = 0
+
+    val fullName get() = "$firstName $lastName (${title ?: "-"})"
+    override fun toString() = fullName
 }
