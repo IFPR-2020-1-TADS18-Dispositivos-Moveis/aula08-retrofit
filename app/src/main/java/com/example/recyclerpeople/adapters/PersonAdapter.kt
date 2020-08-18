@@ -5,37 +5,56 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import androidx.room.Room
 import com.example.recyclerpeople.R
-import com.example.recyclerpeople.database.AppDatabase
-import com.example.recyclerpeople.database.dao.PersonDao
+import com.example.recyclerpeople.api.PersonService
 import com.example.recyclerpeople.model.Person
 import kotlinx.android.synthetic.main.item_person.view.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class PersonAdapter(val listener: PersonAdapterListener, context: Context) :
     RecyclerView.Adapter<PersonAdapter.ViewHolder>() {
 
-    private val dao: PersonDao
-    private var people: MutableList<Person>
+    private val retrofit = Retrofit.Builder()
+        .baseUrl("http://10.0.2.2:3000/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+    private val service = retrofit.create(PersonService::class.java)
+    private var people = mutableListOf<Person>()
 
     init {
-        val db = Room.databaseBuilder(context, AppDatabase::class.java, "person-db")
-            .allowMainThreadQueries()
-            .build()
-        dao = db.personDao()
-        people = dao.getAll().toMutableList()
+        service.getAll().enqueue(object : Callback<List<Person>> {
+            override fun onFailure(call: Call<List<Person>>, t: Throwable) {}
+
+            override fun onResponse(call: Call<List<Person>>, response: Response<List<Person>>) {
+                people = response.body()!!.toMutableList()
+                notifyDataSetChanged()
+            }
+
+        })
     }
 
     fun save(person: Person): Int {
-        return if (person.id == 0L) {
-            person.id = dao.insert(person)
+        return if (person.id == null) {
+            service.insert(person).enqueue(object : Callback<Person> {
+                override fun onFailure(call: Call<Person>, t: Throwable) {}
+                override fun onResponse(call: Call<Person>, response: Response<Person>) {
+                    person.id = response.body()!!.id
+                }
+            })
 
             val position = 0
             people.add(position, person)
             notifyItemInserted(position)
             position
         } else {
-            dao.update(person)
+            service.update(person.id!!, person).enqueue(object : Callback<Person> {
+                override fun onFailure(call: Call<Person>, t: Throwable) {}
+                override fun onResponse(call: Call<Person>, response: Response<Person>) {}
+            })
 
             val position = people.indexOf(person)
             notifyItemChanged(position)

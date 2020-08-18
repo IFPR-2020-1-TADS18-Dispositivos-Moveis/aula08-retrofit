@@ -1,19 +1,15 @@
 package com.example.recyclerpeople.model
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import com.google.gson.annotations.SerializedName
 
-@Entity(tableName = "people")
 data class Person(
     var title: String,
-    @ColumnInfo(name = "first_name")
+    @SerializedName("first_name")
     var firstName: String,
-    @ColumnInfo(name = "last_name")
+    @SerializedName("last_name")
     var lastName: String
 ) {
-    @PrimaryKey(autoGenerate = true)
-    var id: Long = 0
+    var id: Long? = null
 
     val fullName get() = "$firstName $lastName (${title ?: "-"})"
     override fun toString() = fullName
